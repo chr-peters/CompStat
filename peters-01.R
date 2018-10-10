@@ -13,7 +13,8 @@ library(testthat)
 #' @return The greatest common divisor of the natural numbers a and b.
 ggT <- function(a, b) {
   # test if a and b are both integers and greater than zero
-  stopifnot(a %% 1 == 0, b %% 1 == 0, a > 0, b > 0)
+  stopifnot(is.numeric(a), is.numeric(b),
+            a %% 1 == 0, b %% 1 == 0, a > 0, b > 0)
   
   # euclid's algorithm
   remainder <- a %% b
@@ -38,3 +39,72 @@ test_ggT <- function() {
 }
 
 test_ggT()
+
+#' This function computes the n'th fibonacci number using a naive recursive
+#' approach.
+#' 
+#' @param n An integer describing which element of the fibonacci sequence to
+#' return.
+#' 
+#' @return Returns the n'th fibonacci number or n, if n is less than 2.
+fiboSimple <- function(n) {
+  stopifnot(is.numeric(n), n %% 1 == 0)
+  if (n < 2) {
+    return(n)
+  }
+  # definition of the fibonacci sequence
+  return(fiboSimple(n-1) + fiboSimple(n-2))
+}
+
+#' This function tests the simple fibonacci implementation on some examples.
+test_fiboSimple <- function() {
+  test_that("Simple fibonacci test", {
+    expect_equal(fiboSimple(1), 1)
+    expect_equal(fiboSimple(2), 1)
+    expect_equal(fiboSimple(3), 2)
+    expect_equal(fiboSimple(12), 144)
+    expect_equal(fiboSimple(15), 610)
+  })
+}
+
+test_fiboSimple()
+
+#' This function computes the n'th fibonacci number using a more efficient
+#' approach.
+#' 
+#' In every iteration of the algorithm, only the two most recent fibonacci
+#' numbers are kept in memory. The next number of the sequence is calculated
+#' based on these stored numbers in each step. This way, no fibonacci number has
+#' to be computed twice as it is the case with the simple approach.
+#' 
+#' @param n An integer describing which element of the fibonacci sequence to
+#' return.
+#' 
+#' @return Returns the n'th fibonacci number or n, if n is less than 2.
+fiboEfficient <- function(n) {
+  if (n < 2) {
+    return(n)
+  }
+  a <- 1
+  b <- 1
+  while (n > 2) {
+    c <- a + b
+    a <- b
+    b <- c
+    n <- n - 1
+  }
+  return(b)
+}
+
+test_fiboEfficient <- function() {
+  test_that("Efficient fibonacci test", {
+    expect_equal(fiboEfficient(1), 1)
+    expect_equal(fiboEfficient(2), 1)
+    expect_equal(fiboEfficient(3), 2)
+    expect_equal(fiboEfficient(12), 144)
+    expect_equal(fiboEfficient(15), 610)
+    expect_equal(fiboEfficient(30), 832040)
+  })
+}
+
+test_fiboEfficient()
