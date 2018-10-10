@@ -85,17 +85,24 @@ fiboEfficient <- function(n) {
   if (n < 2) {
     return(n)
   }
+  # these are the two most recently calculated fibonacci numbers
   a <- 1
   b <- 1
+  # now iterate until the desired fibonacci number is reached
   while (n > 2) {
+    # calculate the next fibonacci number
     c <- a + b
+    # update the intermediate results
     a <- b
     b <- c
+    # decrement the counter
     n <- n - 1
   }
+  # return the most recent fibonacci number
   return(b)
 }
 
+#' This function tests the efficient fibonacci implementation on some examples.
 test_fiboEfficient <- function() {
   test_that("Efficient fibonacci test", {
     expect_equal(fiboEfficient(1), 1)
