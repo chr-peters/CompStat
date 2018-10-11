@@ -1,4 +1,5 @@
 library(testthat)
+library(microbenchmark)
 
 #' This function determines the greatest common divisor of two natural numbers
 #' using euclid's algorithm.
@@ -82,6 +83,7 @@ test_fiboSimple()
 #' 
 #' @return Returns the n'th fibonacci number or n, if n is less than 2.
 fiboEfficient <- function(n) {
+  stopifnot(is.numeric(n), n %% 1 == 0)
   if (n < 2) {
     return(n)
   }
@@ -115,3 +117,18 @@ test_fiboEfficient <- function() {
 }
 
 test_fiboEfficient()
+
+# performance benchmark
+n <- 15 # fibonacci numbers to generate
+times <- 20 # used to average runtime
+runtimesSimple <- vector(mode="numeric", length=n+1)
+runtimesEfficient <- vector(mode="numeric", length=n+1)
+for (i in 0:n) {
+  runtimesSimple[i+1] <- sum(microbenchmark(fiboSimple(i), times=times)$time)/times
+  runtimesEfficient[i+1] <- sum(microbenchmark(fiboEfficient(i), times=times)$time)/times
+}
+
+plot(0:n, runtimesSimple, main="Runtimes of naive Fibonacci implementation",
+     xlab="Fibonacci number", ylab="Runtime in nanoseconds")
+plot(0:n, runtimesEfficient, main="Runtimes of efficient Fibonacci implementation",
+     xlab="Fibonacci number", ylab="Runtime in nanoseconds")
