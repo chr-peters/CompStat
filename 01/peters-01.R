@@ -1,3 +1,5 @@
+# Name: Christian Peters
+
 library(testthat)
 library(microbenchmark)
 
@@ -44,6 +46,15 @@ test_ggT()
 #' This function computes the n'th fibonacci number using a naive recursive
 #' approach.
 #' 
+#' The complexity of this algorithm is O(2^n), which can be explained as follows:
+#' 
+#' In most cases it takes more time to compute fib(n-1) than fib(n-2) using this
+#' function, but we can estimate an upper boundary of the runtime of 
+#' fib(n) (=T_n = T_n-1 + T_n-2) by using T_n-2 <= T_n-1,
+#' which yields T_n <= 2 * T_n-1.
+#' This recursive relationship directly translates to T_n <= 2^n, thus the
+#' time complexity of this function is O(2^n).
+#' 
 #' @param n An integer describing which element of the fibonacci sequence to
 #' return.
 #' 
@@ -77,6 +88,10 @@ test_fiboSimple()
 #' numbers are kept in memory. The next number of the sequence is calculated
 #' based on these stored numbers in each step. This way, no fibonacci number has
 #' to be computed twice as it is the case with the simple approach.
+#' 
+#' The complexity of this function is O(n) because every intermediate element
+#' of the fibonacci sequence is calculated exactly one time before arriving at
+#' the final result.
 #' 
 #' @param n An integer describing which element of the fibonacci sequence to
 #' return.
