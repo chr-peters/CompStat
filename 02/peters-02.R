@@ -57,10 +57,10 @@ test_bubbleSort <- function() {
     expect_equal(bubbleSort(c(1, 0))[[2]], 1)
     expect_equal(bubbleSort(c(-1, -2))[[1]], c(-2, -1))
     # sorting some samples ascending as well as descending
-    expect_false(is.unsorted(bubbleSort(sample.int(100))[1]))
-    expect_false(is.unsorted(bubbleSort(rnorm(100))[1]))
-    expect_false(is.unsorted(rev(bubbleSort(sample.int(100), TRUE)[1])))
-    expect_false(is.unsorted(rev(bubbleSort(rnorm(100), TRUE)[1])))
+    expect_false(is.unsorted(bubbleSort(sample.int(100))[[1]]))
+    expect_false(is.unsorted(bubbleSort(rnorm(100))[[1]]))
+    expect_false(is.unsorted(rev(bubbleSort(sample.int(100), TRUE)[[1]])))
+    expect_false(is.unsorted(rev(bubbleSort(rnorm(100), TRUE)[[1]])))
   })
 }
 
