@@ -65,3 +65,39 @@ test_bubbleSort <- function() {
 }
 
 test_bubbleSort()
+
+bucketSort <- function(a, n) {
+  stopifnot(is.numeric(a), is.numeric(n), n > 0)
+  maxValue <- max(a)
+  minValue <- min(a) - 5 * .Machine$double.eps
+  buckets <- numeric(length=length(a))
+  count <- 0
+  for (i in 1:length(a)) {
+    buckets[i] <- ceiling(n * (a[i] - minValue) / (maxValue - minValue))
+  }
+  res <- numeric()
+  for (j in 1:n) {
+    tmp <- bubbleSort(a[buckets==j])
+    res <- c(res, tmp[[1]])
+    count <- count + tmp[[2]]
+  }
+  return(list(res, count))
+}
+
+test_bucketSort <- function() {
+  test_that("Test function bucketSort", {
+    # edge cases
+    expect_error(bucketSort(c()))
+    # minimal examples
+    expect_equal(bucketSort(c(0, 1), 1)[[1]], c(0, 1))
+    expect_equal(bucketSort(c(0, 1), 1)[[2]], 1)
+    expect_equal(bucketSort(c(1, 0), 1)[[1]], c(0, 1))
+    expect_equal(bucketSort(c(1, 0), 1)[[2]], 1)
+    expect_equal(bucketSort(c(-1, -2), 1)[[1]], c(-2, -1))
+    # sorting some samples
+    expect_false(is.unsorted(bucketSort(sample.int(100), 10)[[1]]))
+    expect_false(is.unsorted(bucketSort(rnorm(100), 10)[[1]]))
+  })
+}
+
+test_bucketSort()
