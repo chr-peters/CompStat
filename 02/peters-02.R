@@ -42,62 +42,105 @@ bubbleSort <- function(a, decreasing=FALSE) {
   return(list(a, count))
 }
 
-#' This function is used to test the bubbleSort function.
-test_bubbleSort <- function() {
-  test_that("Test function bubbleSort", {
+#' This function is used to test a generic sort function.
+test_sortGeneric <- function(sortFunc) {
+  test_that("Test sorting function", {
     # edge cases
-    expect_error(bubbleSort(c()))
-    expect_equal(bubbleSort(rnorm(0))[[1]], numeric())
-    expect_equal(bubbleSort(c(0))[[1]], c(0))
-    expect_equal(bubbleSort(c(0))[[2]], 0)
+    expect_error(sortFunc(c()))
+    expect_equal(sortFunc(numeric())[[1]], numeric())
+    expect_equal(sortFunc(c(0))[[1]], c(0))
     # minimal examples
-    expect_equal(bubbleSort(c(0, 1))[[1]], c(0, 1))
-    expect_equal(bubbleSort(c(0, 1))[[2]], 1)
-    expect_equal(bubbleSort(c(1, 0))[[1]], c(0, 1))
-    expect_equal(bubbleSort(c(1, 0))[[2]], 1)
-    expect_equal(bubbleSort(c(-1, -2))[[1]], c(-2, -1))
+    expect_equal(sortFunc(c(0, 1))[[1]], c(0, 1))
+    expect_equal(sortFunc(c(1, 0))[[1]], c(0, 1))
+    expect_equal(sortFunc(c(-1, -2))[[1]], c(-2, -1))
     # sorting some samples ascending as well as descending
-    expect_false(is.unsorted(bubbleSort(sample.int(100))[[1]]))
-    expect_false(is.unsorted(bubbleSort(rnorm(100))[[1]]))
-    expect_false(is.unsorted(rev(bubbleSort(sample.int(100), TRUE)[[1]])))
-    expect_false(is.unsorted(rev(bubbleSort(rnorm(100), TRUE)[[1]])))
+    expect_false(is.unsorted(sortFunc(sample.int(100))[[1]]))
+    expect_false(is.unsorted(sortFunc(rnorm(100))[[1]]))
+    expect_false(is.unsorted(rev(sortFunc(sample.int(100), TRUE)[[1]])))
+    expect_false(is.unsorted(rev(sortFunc(rnorm(100), TRUE)[[1]])))
   })
 }
 
-test_bubbleSort()
+test_sortGeneric(bubbleSort)
 
+#' Implementation of the bucket sort algorithm.
+#' 
+#' Complexity: O(n + buckets*(n/buckets)^2)
+#' 
+#' @param a The vector to sort. It has to be numeric.
+#' @param n The number of buckets. It has to be greater than zero.
+#' 
+#' @return A list containing the sorted version of a as the first element and
+#' the number of comparisons as the second element.
 bucketSort <- function(a, n) {
   stopifnot(is.numeric(a), is.numeric(n), n > 0)
+  
+  # no need to sort
+  if (length(a) <= 1) {
+    return(list(a, 0))
+  }
+  
+  # calculate maximum and minimum values
   maxValue <- max(a)
+  # subtract a very small value to avoid the 0 bucket
   minValue <- min(a) - 5 * .Machine$double.eps
   buckets <- numeric(length=length(a))
   count <- 0
-  for (i in 1:length(a)) {
+  
+  # determine the bucket for each element
+  for (i in 1:length(a)) { # complexity: O(n)
     buckets[i] <- ceiling(n * (a[i] - minValue) / (maxValue - minValue))
   }
+  
+  # apply bubbleSort to each bucket
   res <- numeric()
   for (j in 1:n) {
-    tmp <- bubbleSort(a[buckets==j])
+    tmp <- bubbleSort(a[buckets==j]) # complexity: O(n^2)
     res <- c(res, tmp[[1]])
     count <- count + tmp[[2]]
   }
   return(list(res, count))
 }
 
-test_bucketSort <- function() {
-  test_that("Test function bucketSort", {
-    # edge cases
-    expect_error(bucketSort(c()))
-    # minimal examples
-    expect_equal(bucketSort(c(0, 1), 1)[[1]], c(0, 1))
-    expect_equal(bucketSort(c(0, 1), 1)[[2]], 1)
-    expect_equal(bucketSort(c(1, 0), 1)[[1]], c(0, 1))
-    expect_equal(bucketSort(c(1, 0), 1)[[2]], 1)
-    expect_equal(bucketSort(c(-1, -2), 1)[[1]], c(-2, -1))
-    # sorting some samples
-    expect_false(is.unsorted(bucketSort(sample.int(100), 10)[[1]]))
-    expect_false(is.unsorted(bucketSort(rnorm(100), 10)[[1]]))
+# now test bucket sort
+for (buckets in 1:20) {
+  test_sortGeneric(function (a, descending=FALSE) {
+    if (descending) {
+      # reverse the result if the testing function expects a descending list
+      res <- bucketSort(a, buckets)
+      return(list(rev(res[[1]]), res[[2]]))
+    } else {
+      return(bucketSort(a, buckets))
+    }
   })
 }
 
-test_bucketSort()
+# simulation function
+startSimulation <- function() {
+  # simulation parameters
+  numBuckets <- 100
+  numRuns <- 100
+  
+  buckets <- 1:numBuckets
+  # for every bucket count, the mean of the comparisons is stored here
+  meanComparisons <- numeric(length = numBuckets)
+  
+  for (n in buckets) {
+    # the results of each run are stored here
+    comparisons <- numeric(length = numRuns)
+    for (i in 1:numRuns) {
+      comparisons[i] <- bucketSort(sample.int(1000), n)[[2]]
+    }
+    # save the mean
+    meanComparisons[n] <- mean(comparisons)
+  }
+  plot(buckets, meanComparisons, xlab="Number of Buckets",
+       ylab="Mean Number of Comparisons", main="Analysis of Bucket Sort")
+}
+
+#startSimulation()
+
+# If the elements of the list are not equally distributed (like samples from
+# a normal distribution for example), some buckets contain more elements than
+# others. This means that bucketsort is unfair to those buckets that contain
+# more elements.
