@@ -178,7 +178,7 @@ varEval <- function() {
   )
 }
 
-print(microbenchmark(varEval(), times=1))
+#print(microbenchmark(varEval(), times=1))
 
 # The algorithms produce exact results when the exponent is in the interval [1, 21].
 #
