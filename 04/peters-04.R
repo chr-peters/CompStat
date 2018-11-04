@@ -27,6 +27,62 @@ print(polyroot(c(4, -4, 1))==2)
 # sin(x)**2 + cos(x)**2 = 1
 print(sin(0.08)**2 + cos(0.08)**2 == 1)
 
+# No 2)
+#======
+# Set parameters a_2, a_1, a_0 and x in such a way that g_a(x) = 0
+a_2 <- 1
+a_1 <- 0
+a_0 <- -4
+x <- 2
+
+g <- function(a, x) {
+  return(a[3]*x*x+a[2]*x+a[1])
+}
+
+print(paste("Result without input errors: g_a(x) = ", g(c(a_0, a_1, a_2), x)))
+
+# now disturb each input a little bit
+delta <- rnorm(1, sd=1e-1)
+
+a_2 <- a_2 + delta
+a_1 <- a_1 + delta
+a_0 <- a_0 + delta
+x <- x + delta
+
+print(paste("Result with distorted inputs (", "added value ", delta,
+            "): g_a(x) = ", g(c(a_0, a_1, a_2), x)))
+
+# As we can see in this example, the error present in the inputs is amplified
+# roughly by a factor of 10 when g_a(x) is close to zero.
+# This is due to cancellation effects that occur when subtracting two numbers of
+# nearly equal size.
+
+# Now let's look at an example where g_a(x) is not quite as sensitive to errors
+# in the inputs.
+# In order to do this, we set parameter a_1 to something else than zero (this way
+# avoiding cancellation effects).
+
+a_2 <- 1
+a_1 <- 2
+a_0 <- -4
+x <- 2
+
+print(paste("Result without input errors: g_a(x) = ", g(c(a_0, a_1, a_2), x)))
+
+# now disturb each input a little bit
+delta <- rnorm(1, sd=1e-1)
+
+a_2 <- a_2 + delta
+a_1 <- a_1 + delta
+a_0 <- a_0 + delta
+x <- x + delta
+
+print(paste("Result with distorted inputs (", "added value ", delta,
+            "): g_a(x) = ", g(c(a_0, a_1, a_2), x)))
+
+# As we can see, g_a(x) is not as sensitive to errors in the inputs anymore.
+# This is due to the fact that there were no cancellation effects present
+# in this example.
 
 # No 3)
 #======
@@ -122,7 +178,7 @@ varEval <- function() {
   )
 }
 
-#print(microbenchmark(varEval(), times=1))
+print(microbenchmark(varEval(), times=1))
 
 # The algorithms produce exact results when the exponent is in the interval [1, 21].
 #
