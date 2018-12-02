@@ -195,7 +195,7 @@ plotMedianProblem()
 # through the whole dataset once. Thus, the total complexity of the GSS
 # median algorithm is O(n*ln(n)), just like an efficient sorting algorithm.
 #
-# In GSS, the number of iterations is only in O(ln(n)), if we can assume that
+# In GSS, the number of iterations is only in O(ln(n)) if we can assume that
 # the data is uniformly distributed. This means that in the worst case,
 # GSS can be worse than O(n*ln(n)). Taking this into consideration, I would
 # prefer using the sorting method, because it is more robust than the
