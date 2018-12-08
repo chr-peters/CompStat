@@ -90,12 +90,26 @@ testDfpOptim()
 # No. 3)
 # ======
 
+#' Helper function that executes a single simulation from the simulation study.
+#' 
+#' @param method The optimization algorithm to be used.
+#' @param b      The number of observations.
+#' @param n      The number of features.
+#' @param k      Parameter that adjusts the condition number of the problem.
+#' @param eps   Quality of the starting point.
+#' @param u      Direction in which to deviate from the optimal starting point.
+#' 
+#' @return A list containing the number of function calls, the error as the euclidean
+#'         distance to the optimum and the suboptimality of the solution.
 singleSimulation <- function(method, b, n, k, eps, u) {
   # create the matrix X from random observations
   X <- matrix(rnorm(b*n), nrow=b, ncol=n)
   X[, n] <- 1
   y <- sample(c(1, 0), b, replace=TRUE)
   X <- X + k * y %*% t(rep(1, n))
+  
+  # restore the intercept
+  X[, n] <- 1
   
   # the function to be minimized
   scoreFun <- function(theta) {
@@ -109,8 +123,21 @@ singleSimulation <- function(method, b, n, k, eps, u) {
   # find the starting value
   
   # first, use glm to find the optimum
-  best <- glm(y ~ ., family=binomial(link='logit'), data=cbind(as.data.frame(X[,-n]), y=y))
-  best <- unname(c(best$coefficients[-1], best$coefficients[1]))
+  success <- TRUE
+  tryCatch({
+    best <- glm(y ~ ., family=binomial(link='logit'),
+                data=cbind(as.data.frame(X[,-n]), y=y))
+    best <- unname(c(best$coefficients[-1], best$coefficients[1]))
+  }, warning = function(w){
+    success <<- FALSE
+  }, error = function(e){
+    success <<- FALSE
+  })
+  
+  if (!success) {
+    # no optimum exists for that example
+    stop('No optimum exists!')
+  }
   
   # now, get ny
   nySearch <- function(ny) {
@@ -125,8 +152,85 @@ singleSimulation <- function(method, b, n, k, eps, u) {
   res <- optim(start, scoreFun, method=method)
 
   # return the relevant results
-  return(list(iterations=unname(res$counts[2]), error=norm(res$par - best, type='2'),
+  return(list(functionCalls=unname(res$counts[1]),
+              error=norm(res$par - best, type='2'),
               suboptimality=(scoreFun(res$par) - scoreFun(best))[1, 1]))
 }
 
-print(singleSimulation("CG", 50, 3, 0, 1, c(1, 0, 0)))
+#' This function is used to execute the simulation study.
+#' 
+#' @return A data.frame that contains the results.
+simulationStudy <- function() {
+  # create an empty data.frame to store the results
+  result <- data.frame(method=character(), b=integer(), n=integer(), k=double(), 
+                       eps=double(), functionCalls=integer(), error=double(),
+                       suboptimality=double(), stringsAsFactors = FALSE)
+  
+  curIteration <- 1
+  maxIterations <- 3072
+  
+  # now iterate over all the parameter combinations
+  for (method in c("CG", "BFGS")) {
+    for (b in c(100, 200, 500, 1000)) {
+      for (n in c(5, 10, 15, 20)) {
+        for (k in c(0, 0.25, 0.5, 1)) {
+          for (eps in c(1, 2, 3, 4)) {
+            for (curDirection in 1:4) {
+              # create a random direction
+              u <- rnorm(n)
+              u <- u / norm(u, type='2')
+              
+              # run a single simulation
+              success <- TRUE
+              tryCatch({
+                simRes <- singleSimulation(method, b, n, k, eps, u)
+              }, error = function(e){
+                success <<- FALSE
+              })
+              
+              # try the next example if no result could be obtained
+              if (!success) {
+                curIteration <- curIteration + 1
+                next
+              }
+              
+              # add the results to the data.frame
+              result <- rbind(result, list(method=method, b=b, n=n, k=k, eps=eps,
+                                           functionCalls=simRes$functionCalls,
+                                           error=simRes$error,
+                                           suboptimality=simRes$suboptimality),
+                              stringsAsFactors = FALSE)
+              
+              # print progress
+              percent <- as.integer(curIteration / maxIterations * 100)
+              print(paste0('Iteration: ', curIteration,', ', percent, '% done.'))
+              
+              curIteration <- curIteration + 1
+            }
+          }
+        }
+      }
+    }
+  }
+  return(result)
+}
+
+result <- simulationStudy()
+
+testResult <- function(result) {
+  # do a t-test to see if the suboptimality of CG is better than that of BFGS
+  bfgs <- result[result$method=='BFGS',]$suboptimality
+  cg <- result[result$method=='CG',]$suboptimality
+  
+  # Zero Hypothesis: Mean of suboptimality of BFGS it lower than that of CG
+  # Alternative: Suboptimality of BFGS has a greater mean than that of CG
+  test <- t.test(bfgs, cg, alternative='greater')
+  print(test)
+}
+
+testResult(result)
+
+# We can see that the CG algorithm produces significantly less suboptimal results
+# than the BFGS algorithm according to the t-test.
+
+# Here are the results of the t-test:
