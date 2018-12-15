@@ -1,5 +1,8 @@
 # Name: Christian Peters
 
+library(testthat)
+library(mvtnorm)
+
 # No. 1)
 # ======
 
@@ -18,12 +21,16 @@ print(paste0('theta_1 = ', theta[1], ', theta_2 = ', theta[2]))
 # No. 2)
 # ======
 
-# mySimplex - Simplex-Verfahren
+# nelderMead - NelderMead-Verfahren
 # Eingabe:
 #    f           - Funktion, deren Optimum(Minimum) gefunden werden soll, soll
 #                  aus dem R^K auf R abbilden
 #    theta.start - numeric(k), Position des Start-Simplex
-#    t           - numerisch, Groesse des Simplex
+#    eps         - numeric, threshold for minimum simplex size
+#    alpha       - reflexion factor
+#    beta        - contraction factor
+#    gamma       - expansion factor
+#    t           - starting size of the simplex
 #    maxit       - maximale Anzahl an Iterationen (zweites Abbruchkriterium),
 #                  natuerliche Zahl, default 1000
 #
@@ -32,7 +39,8 @@ print(paste0('theta_1 = ', theta[1], ', theta_2 = ', theta[2]))
 #    pars - numerische Matix, ausgewertete Parameter, einer je Zeile
 #    vals - Funktionswerte an den Stelle 'par'
 
-mySimplex <- function(f, theta.start, t = 1, maxit = 1000) {
+nelderMead <- function(f, theta.start, eps = 1e-16, alpha = 1, beta = 0.5,
+                       gamma = 2, t = 1, maxit = 1000) {
   K <- length(theta.start)
   # Als erstes brauchen wir den Startsimplex:
   d1 <- t / K / sqrt(2) * (sqrt(K + 1) + K - 1)
@@ -47,19 +55,82 @@ mySimplex <- function(f, theta.start, t = 1, maxit = 1000) {
   theta.vals <- apply(theta, 2, f)
   
   for (i in seq_len(maxit)) {
-    # Bestimme neues Theta durch Spiegelung
+    # get highest point, lowest point as well as the centroid
     h <- which.max(theta.vals)
+    l <- which.min(theta.vals)
     theta.centroid <- rowMeans(theta[, -h])
-    theta.new <- 2 * theta.centroid - theta[, h]
-    # Simplex updaten
-    theta[, h] <- theta.new
-    theta.vals[h] <- f(theta.new)
+    
+    # stopping criterion
+    fCentroid <- f(theta.centroid)
+    score <- sqrt(mean(sapply(theta.vals, function(x) (x - fCentroid)**2)))
+    if (score <= eps) {
+      break
+    }
+    
+    # reflexion
+    theta.new <- theta.centroid + alpha * (theta.centroid - theta[, h])
+    
+    # expansion
+    fOld <- f(theta.new)
+    theta.old <- theta.new
+    if (fOld <= theta.vals[l]) {
+      theta.new <- theta.centroid + gamma * (theta.old - theta.centroid)
+      
+      fNew <- f(theta.new)
+      if (fNew < theta.vals[l]) {
+        theta[, h] <- theta.new
+        theta.vals[h] <- fNew
+      } else {
+        theta[, h] <- theta.old
+        theta.vals[h] <- fOld
+      }
+      next
+    }
+    
+    # contraction
+    theta.new <- theta.centroid + beta * (theta[, h] - theta.centroid)
+    fNew <- f(theta.new)
+    if (fNew <= theta.vals[h]) {
+      theta[, h] <- theta.new
+      theta.vals[h] <- fNew
+      next
+    }
+    
+    # reduction
+    theta <- apply(theta, 2, function(x) theta[, l] + 0.5 * (x - theta[, l]))
+    theta.vals <- apply(theta, 2, f)
   }
+  
   best = which.min(theta.vals)
   return(list(pars = theta[, best], vals = theta.vals[best]))
 }
 
-print(mySimplex(function(x) sum(x^2), rep(10, 2)))
+#' This function is used to test the nelder-mead algorithm.
+testNelderMead <- function() {
+  test_that('Test of the nelder-mead optimization algorithm.', {
+    # negative bivariate normal distribution with rho of 0
+    expect_equal(nelderMead(function(x) {
+      -dmvnorm(x, c(5, 5), matrix(c(1, 0, 0, 1), nrow=2))
+    }, c(0, 0))$par, c(5, 5), tolerance=1e-6)
+    
+    # negative bivariate normal distribution with moderate rho of 0.5
+    expect_equal(nelderMead(function(x) {
+      -dmvnorm(x, c(1, 2), matrix(c(1, 0.5, 0.5, 1), nrow=2))
+      }, c(0, 0))$par, c(1, 2), tolerance=1e-6)
+    
+    # increase rho to 0.9
+    expect_equal(nelderMead(function(x) {
+      -dmvnorm(x, c(0, 0), matrix(c(1, 0.9, 0.9, 1), nrow=2))
+    }, c(2, 1))$par, c(0, 0), tolerance=1e-6)
+    
+    # almost impossible
+    expect_equal(nelderMead(function(x) {
+      -dmvnorm(x, c(0, 0), matrix(c(1, 0.99, 0.99, 1), nrow=2))
+    }, c(5, 5))$par, c(0, 0), tolerance=1e-6)
+  })
+}
+
+testNelderMead()
 
 # No. 3)
 # ======
