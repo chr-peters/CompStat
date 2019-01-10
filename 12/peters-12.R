@@ -114,9 +114,13 @@ testGeom <- function(prob, numSamples=10000) {
   yReference <- dgeom(xReference, prob)
   
   # plot the results
-  hist(randomNumbers, freq=FALSE, right=FALSE)
+  hist(randomNumbers, xlab='x', ylab='f(x)',
+       main=paste0('Comparison of Geometric Distribution Samplers with prob=', prob),
+       freq=FALSE, right=FALSE)
   
-  lines(xReference, yReference)
+  lines(xReference, yReference, col='red', lwd=2)
+  
+  legend('topright', legend=c('sampleRND', 'dgeom'), col=c('black', 'red'), lty=1)
 }
 
 testGeom(0.5)
