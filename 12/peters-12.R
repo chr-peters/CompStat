@@ -1,6 +1,9 @@
 # Name: Christian Peters
 
-set.seed(1234)
+#set.seed(1234)
+
+# used for creating permutations
+library(gtools)
 
 # No. 1)
 # ======
@@ -14,14 +17,14 @@ gapTest <- function(generator, alpha, beta, z, numSamples=1000) {
   randomNumbers <- generator(numSamples)
   
   # get the gaps
-  gaps <- double(z + 1)
+  gaps <- integer(z + 1)
   
   curGap <- 0
   for (i in seq_along(randomNumbers)) {
     # test if the gap is broken
     if (alpha <= randomNumbers[i] && randomNumbers[i] <= beta) {
-      # Store the gap count at the corresponding index in the gaps vector.
-      # All gaps >= z are stored at the index z+1
+      # store the gap count at the corresponding index in the gaps vector
+      # all gaps >= z are stored at the index z+1
       gapIndex <- min(curGap + 1, z + 1)
       gaps[gapIndex] <- gaps[gapIndex] + 1
       
@@ -46,4 +49,36 @@ gapTest <- function(generator, alpha, beta, z, numSamples=1000) {
   return(test)
 }
 
-print(gapTest(sampleRNG, 0.25, 0.75, 5))
+#print(gapTest(sampleRNG, 0.25, 0.75, 5))
+
+permutationTest <- function(generator, elementsPerGroup, numGroups) {
+  # organize the random numbers as a matrix
+  randomNumbers <- matrix(generator(elementsPerGroup * numGroups),
+                          nrow=elementsPerGroup, ncol=numGroups)
+  
+  # create vector to store the count of each permutation
+  permutationCounts <- integer(factorial(elementsPerGroup))
+  
+  # now get the counts of each permutation
+  indexPermutations <- permutations(elementsPerGroup, elementsPerGroup)
+  
+  for (i in seq_along(permutationCounts)) {
+    # check each group if it corresponds to the current permutation
+    permutationHits <- apply(randomNumbers, 2, function(group) {
+      if(is.unsorted(group[indexPermutations[i, ]])) {
+        return(0)
+      }
+      return(1)
+    })
+    
+    # store the count
+    permutationCounts[i] <- sum(permutationHits)
+  }
+  
+  # do the chi-squared test
+  test <- chisq.test(x=permutationCounts)
+  
+  return(test)
+}
+
+print(permutationTest(sampleRNG, 3, 1000))
