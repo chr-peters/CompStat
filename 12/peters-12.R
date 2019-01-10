@@ -1,9 +1,10 @@
 # Name: Christian Peters
 
-#set.seed(1234)
+set.seed(1234)
 
 # used for creating permutations
 library(gtools)
+library(ggplot2)
 
 # No. 1)
 # ======
@@ -81,4 +82,41 @@ permutationTest <- function(generator, elementsPerGroup, numGroups) {
   return(test)
 }
 
-print(permutationTest(sampleRNG, 3, 1000))
+#print(permutationTest(sampleRNG, 3, 1000))
+
+# No. 2)
+# ======
+
+sampleGeom <- function(n, prob) {
+  result <- integer(n)
+  for (i in seq_along(result)) {
+    # do the bernoulli experiments
+    numTrials <- 0
+    repeat {
+      rand <- sampleRNG(1)
+      if (rand <= prob) {
+        break
+      }
+      numTrials <- numTrials + 1
+    }
+    result[i] <- numTrials
+  }
+  
+  return(result)
+}
+
+testGeom <- function(prob, numSamples=10000) {
+  # get the random numbers
+  randomNumbers <- sampleGeom(numSamples, prob)
+  
+  # get the 'true' density
+  xReference <- seq(min(randomNumbers), max(randomNumbers))
+  yReference <- dgeom(xReference, prob)
+  
+  # plot the results
+  hist(randomNumbers, freq=FALSE, right=FALSE)
+  
+  lines(xReference, yReference)
+}
+
+testGeom(0.5)
