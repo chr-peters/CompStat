@@ -64,10 +64,7 @@ permutationTest <- function(generator, elementsPerGroup, numGroups) {
   for (i in seq_along(permutationCounts)) {
     # check each group if it corresponds to the current permutation
     permutationHits <- apply(randomNumbers, 2, function(group) {
-      if(is.unsorted(group[indexPermutations[i, ]])) {
-        return(0)
-      }
-      return(1)
+      as.integer(!is.unsorted(group[indexPermutations[i, ]]))
     })
     
     # store the count
@@ -92,7 +89,7 @@ testGenerator <- function(runsPerTest) {
   
 }
 
-#testGenerator(200)
+testGenerator(100)
 
 # No. 2)
 # ======
