@@ -183,3 +183,8 @@ testNorm <- function(mean, sd, numSamples=10000) {
 }
 
 testNorm(0, 1)
+
+# Test auf Normalverteilung:
+# shapiro.test
+
+# ein Boxplot pro k (p-Werte muessen gleichverteilt sein)
