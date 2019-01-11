@@ -50,8 +50,6 @@ gapTest <- function(generator, alpha, beta, z, numSamples=1000) {
   return(test)
 }
 
-#print(gapTest(sampleRNG, 0.25, 0.75, 5))
-
 permutationTest <- function(generator, elementsPerGroup, numGroups) {
   # organize the random numbers as a matrix
   randomNumbers <- matrix(generator(elementsPerGroup * numGroups),
@@ -82,7 +80,19 @@ permutationTest <- function(generator, elementsPerGroup, numGroups) {
   return(test)
 }
 
-#print(permutationTest(sampleRNG, 3, 1000))
+testGenerator <- function(runsPerTest) {
+  gapResults <-replicate(runsPerTest, gapTest(sampleRNG, 0.25, 0.75, 5)$p.value)
+  hist(gapResults, xlab='p-value', main='Distribution of P-Values in the Gaptest',freq=FALSE)
+  
+  sequenceLength <- 100
+  for (t in 3:5) {
+    permutationResults <- replicate(runsPerTest, permutationTest(sampleRNG, t, sequenceLength %/% t)$p.value)
+    hist(permutationResults, xlab='p-value', main=paste0('Distribution of P-Values in the Permutationtest, T=', t), freq=FALSE)
+  }
+  
+}
+
+#testGenerator(1000)
 
 # No. 2)
 # ======
@@ -110,7 +120,7 @@ testGeom <- function(prob, numSamples=10000) {
   randomNumbers <- sampleGeom(numSamples, prob)
   
   # get the 'true' density
-  xReference <- seq(min(randomNumbers), max(randomNumbers))
+  xReference <- seq(0, max(randomNumbers), 1)
   yReference <- dgeom(xReference, prob)
   
   # plot the results
@@ -118,9 +128,33 @@ testGeom <- function(prob, numSamples=10000) {
        main=paste0('Comparison of Geometric Distribution Samplers with prob=', prob),
        freq=FALSE, right=FALSE)
   
-  lines(xReference, yReference, col='red', lwd=2)
+  points(xReference, yReference, col='red', lwd=2)
   
-  legend('topright', legend=c('sampleRND', 'dgeom'), col=c('black', 'red'), lty=1)
+  legend('topright', legend=c('sampleRND', 'dgeom'), col=c('black', 'red'), lty=c(1, NA), pch=c(NA, 1))
 }
 
 testGeom(0.5)
+
+sampleExp <- function(n, rate) {
+  -log(1-sampleRNG(n))/rate
+}
+
+testExp <- function(rate, numSamples=10000) {
+  # get the random numbers
+  randomNumbers <- sampleExp(numSamples, rate)
+  
+  # get the 'true' density
+  xReference <- seq(0, max(randomNumbers), 0.01)
+  yReference <- dexp(xReference, rate)
+  
+  # plot the results
+  hist(randomNumbers, xlab='x', ylab='f(x)',
+       main=paste0('Comparison of Exponential Distribution Samplers with rate=', rate),
+       freq=FALSE, right=FALSE)
+  
+  lines(xReference, yReference, col='red', lwd=2)
+  
+  legend('topright', legend=c('sampleRND', 'dexp'), col=c('black', 'red'), lty=1)
+}
+
+testExp(1)
