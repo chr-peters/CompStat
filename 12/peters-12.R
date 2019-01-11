@@ -84,7 +84,7 @@ testGenerator <- function(runsPerTest) {
   gapResults <-replicate(runsPerTest, gapTest(sampleRNG, 0.25, 0.75, 5)$p.value)
   hist(gapResults, xlab='p-value', main='Distribution of P-Values in the Gaptest',freq=FALSE)
   
-  sequenceLength <- 100
+  sequenceLength <- 10000
   for (t in 3:5) {
     permutationResults <- replicate(runsPerTest, permutationTest(sampleRNG, t, sequenceLength %/% t)$p.value)
     hist(permutationResults, xlab='p-value', main=paste0('Distribution of P-Values in the Permutationtest, T=', t), freq=FALSE)
@@ -92,7 +92,7 @@ testGenerator <- function(runsPerTest) {
   
 }
 
-#testGenerator(1000)
+#testGenerator(200)
 
 # No. 2)
 # ======
@@ -130,7 +130,7 @@ testGeom <- function(prob, numSamples=10000) {
   
   points(xReference, yReference, col='red', lwd=2)
   
-  legend('topright', legend=c('sampleRND', 'dgeom'), col=c('black', 'red'), lty=c(1, NA), pch=c(NA, 1))
+  legend('topright', legend=c('sampleGeom', 'dgeom'), col=c('black', 'red'), lty=c(1, NA), pch=c(NA, 1))
 }
 
 testGeom(0.5)
@@ -154,7 +154,32 @@ testExp <- function(rate, numSamples=10000) {
   
   lines(xReference, yReference, col='red', lwd=2)
   
-  legend('topright', legend=c('sampleRND', 'dexp'), col=c('black', 'red'), lty=1)
+  legend('topright', legend=c('sampleExp', 'dexp'), col=c('black', 'red'), lty=1)
 }
 
 testExp(1)
+
+sampleNorm <- function(n, mean, sd, k=12) {
+  replicate(n, (sum(sampleRNG(k)) - k/2) * sqrt(12/k) * sd + mean)
+}
+
+testNorm <- function(mean, sd, numSamples=10000) {
+  # get the random numbers
+  randomNumbers <- sampleNorm(numSamples, mean, sd)
+  
+  # get the 'true' density
+  xReference <- seq(min(randomNumbers), max(randomNumbers), 0.01)
+  yReference <- dnorm(xReference, mean, sd)
+  
+  # plot the results
+  hist(randomNumbers, xlab='x', ylab='f(x)',
+       main=paste0('Comparison of Normal Distribution Samplers with mean=', mean,
+                   ' sd=', sd),
+       freq=FALSE, right=FALSE)
+  
+  lines(xReference, yReference, col='red', lwd=2)
+  
+  legend('topright', legend=c('sampleNorm', 'dnorm'), col=c('black', 'red'), lty=1)
+}
+
+testNorm(0, 1)
