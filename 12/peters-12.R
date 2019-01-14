@@ -13,7 +13,7 @@ sampleRNG <- function(n) {
   sample(2^31, n) / 2^31
 }
 
-#' Imlpementation of the gaptest.
+#' Implementation of the gaptest.
 #' 
 #' @param generator  A random number generator.
 #' @param alpha      Left boundary of the gap.
