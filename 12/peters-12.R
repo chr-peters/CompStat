@@ -114,7 +114,7 @@ testGenerator <- function(runsPerTest) {
   
 }
 
-testGenerator(100)
+# testGenerator(100)
 
 # As we can see, the p-values are uniformly distributed for both tests. This
 # is a good indication that H0 holds true, since the p-values would not be
